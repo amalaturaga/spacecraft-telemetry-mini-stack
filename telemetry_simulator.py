@@ -38,7 +38,6 @@ def start_test_run(chamber_name, article_name, procedure_name, operator, test_le
         "article_name": article_name,
     }
 
-
 def log_event(run_id, event_type, severity, description, metadata=None):
     with conn.cursor() as cur:
         cur.execute("""
