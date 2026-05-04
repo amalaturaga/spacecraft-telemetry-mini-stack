@@ -1,19 +1,38 @@
+# pyright: reportAttributeAccessIssue=false
 # dc310pro.py
 """
 Module for communicating with the DC310PRO programmable DC power supply.
 
-This module gives a simple Python interface to the instrument. It will be able to open the connection, 
-ask the instrument for identity, and close cleanly.
+Provides a DC310Pro class that wraps pyvisa with a simple, focused interface:
+- Connect to the instrument
+- Read measurements (voltage, current, power)
+- Disconnect cleanly
+
+The DC310Pro uses a CH340 USB-to-serial bridge internally, so it appears
+to the OS as a serial device (e.g., /dev/ttyUSB1 on Linux). Default
+serial parameters: 115200 baud, 8 data bits, no parity, 1 stop bit,
+LF (\\n) line termination.
+
+Usage:
+    with DC310Pro("ASRL/dev/ttyUSB1::INSTR") as psu:
+        v = psu.measure_voltage()
+        i = psu.measure_current()
 
 """
 
 import pyvisa
 
 class DC310PRO:
+    # Identification strings to expect in *IDN? response
     EXPECTED_VENDOR = "KIPRIM"
     EXPECTED_MODEL = "DC310"
 
-    def __init__(self, resource_string=None):
+    # Serial parameters established by experiemnt with this device
+    DEFAULT_BAUD_RATE = 115200
+    DEFAULT_DATA_BITS = 8
+    DEFAULT_TIMEOUT_MS = 2000 # default for slow serial responses
+
+    def __init__(self, resource_string):
         """
         Connect to DC310PRO instrument. 
 
@@ -26,15 +45,21 @@ class DC310PRO:
 
         """
         self._rm = pyvisa.ResourceManager()
-        
-        if resource_string is None:
-            resources = self._rm.list_resources()
-            if not resources:
-                raise RuntimeError(
-                    "No instruments found. Please check the connection."
-                )
-            resource_string = resources[0]
-        self._instrument = self._rm.open_resource(resource_string)
+ 
+        # Open resource. Returned object is message-based
+        self._instrument = pyvisa.resources.MessageBasedResource = (
+            self._rm.open_resource(resource_string)
+        )
+
+        # Configure the serial connection parameters. Set AFTER open_resource()
+        # since pyvisa creates the resource with default values
+        self._instrument.baud_rate = self.DEFAULT_BAUD_RATE
+        self._instrument.data_bits = self.DEFAULT_DATA_BITS
+        self._instrument.timeout = self.DEFAULT_TIMEOUT_MS
+        self._instrument.parity = pyvisa.constants.Parity.none
+        self._instrument.stop_bits = pyvisa.constants.StopBits.one
+        self._instrument.write_termination = "\n"
+        self._instrument.read_termination = "\n"
 
         # Validate that we are connected to the expected instrument before sending commands
         identity = self._instrument.query("*IDN?").strip()
@@ -114,8 +139,12 @@ class DC310PRO:
 
 
 if __name__ == "__main__":
-    # Quick demo that is run when file is executed directly.
-    with DC310PRO() as psu:
+    # Quick demo that is run when file is executed directly. The resource string
+    # is harcoded for now; later it'll read it from a config
+
+    RESOURCE = "ASRL/dev/ttyUSB1::INSTR"
+
+    with DC310PRO(RESOURCE) as psu:
         v = psu.measure_voltage()
         i = psu.measure_current()
         p = psu.measure_power()
