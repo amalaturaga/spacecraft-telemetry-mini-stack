@@ -10,7 +10,7 @@ dependencies = [
     "psycopg-binary==3.3.3",
     "python-dotenv==1.2.2",
     "pyvisa>=1.16.2",
-    "pyvisa-py>=0.8.1",
+    "pyvisa-py[serial]>=0.8.1",
 ]
 
 # pyproject.toml
