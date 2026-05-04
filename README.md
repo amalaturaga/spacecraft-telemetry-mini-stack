@@ -34,8 +34,8 @@ in a unified database.
 │  - Sensor stream generator   │
 │  - Event logger              │
 └──────────────┬───────────────┘
-│
-▼
+               │
+               ▼
 ┌──────────────────────────────┐
 │   TimescaleDB (Postgres 16)  │
 │   - chambers (metadata)      │
@@ -44,8 +44,8 @@ in a unified database.
 │   - telemetry (hypertable)   │
 │   - test_events (hypertable) │
 └──────────────┬───────────────┘
-│
-▼
+               │
+               ▼
 ┌──────────────────────────────┐
 │           Grafana            │
 │   - Live sensor dashboards   │
@@ -134,6 +134,15 @@ See `schema/init.sql` for the full schema.
 - Automated abort logic: webhook receiver that responds to Grafana alerts 
   by writing safety events back into the database.
 - Multi-chamber simulation with concurrent test runs.
+
+## Hardware verification log
+
+**2026-05-04: First successful DC310Pro communication on the GSE NUC.**
+- Device path: `/dev/ttyUSB1` (CH340 USB-to-serial bridge)
+- Serial parameters: 115200 baud, 8N1, LF termination
+- Identity: `KIPRIM,DC310Pro,25130278,FV:V2.1.0`
+- Validated live voltage reading: changed setpoint from 0V to 3V on
+  the front panel, code immediately reflected the new value.
 
 ## License
 
